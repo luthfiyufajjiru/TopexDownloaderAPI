@@ -18,7 +18,7 @@ namespace TopexDownloaderAPI
             var result = input.TrimStart()
                              .Split(' ')
                              .Where(i => i != "" && i != " ")
-                             .Select(i => Double.Parse(i.Replace('.', ',')))
+                             .Select(i => Double.Parse(i))
                              .Chunk(3)
                              .Select(i => new TopexDataModel(i[1], i[0], i[2]))
                              .ToList();
