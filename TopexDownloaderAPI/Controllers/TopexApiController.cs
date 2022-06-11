@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
-using tp = TopexDownloaderAPI.TopexServices;
+using System.Text;
+using TopexDownloaderAPI.Services;
+using tp = TopexDownloaderAPI.Services.TopexServices;
+using gis = TopexDownloaderAPI.Services.GeographicServices;
 
 namespace TopexDownloaderAPI.Controllers
 {
@@ -15,19 +17,27 @@ namespace TopexDownloaderAPI.Controllers
             _logger = logger;
         }
 
-        [HttpGet(Name = "GetGravity")]
-        public async Task<IActionResult> gravity(double north, double west, double east, double south)
+        [HttpGet(Name = "Get Gravity")]
+        public async Task<IActionResult> gravity(double north, double west, double east, double south, bool download)
         {
             List<TopexDataModel> results = new();
             try
-            {
-                if (north < south) throw new ApplicationException("north coordinate is smaller than south!");
-                else if (east < west) throw new ApplicationException("east coordinate is smaller than west!");
+            {   
+                if (north <= south) throw new ApplicationException("north coordinate is smaller or equal than south!");
+                else if (east <= west) throw new ApplicationException("east coordinate is smaller or equal than west!");
+
+                if (gis.LatLonRectangle(north, west, east, south) > 5e10) throw new ApplicationException("the area is too big!");
 
                 var topexRequest = tp.GetFromTopex(north, west, east, south, 0.1);
                 await topexRequest;
 
                 results = topexRequest.Result;
+
+                if (download)
+                {
+                    var file = await results.WriteCSV(true);
+                    return File(file, "text/csv", $"{DateTime.Now}-gravity.csv");
+                }
 
             }
             catch (ApplicationException e)
@@ -42,19 +52,28 @@ namespace TopexDownloaderAPI.Controllers
             return Ok(results);
         }
 
-        [HttpGet(Name = "GetElevation")]
-        public async Task<IActionResult> elevation(double north, double west, double east, double south)
+        [HttpGet(Name = "Get Elevation")]
+        public async Task<IActionResult> elevation(double north, double west, double east, double south, bool download)
         {
             List<TopexDataModel> results = new();
+
             try
             {
                 if (north < south) throw new ApplicationException("north coordinate is smaller than south!");
                 else if (east < west) throw new ApplicationException("east coordinate is smaller than west!");
 
+                if (gis.LatLonRectangle(north, west, east, south) > 5e10) throw new ApplicationException("the area is too big!");
+
                 var topexRequest = tp.GetFromTopex(north, west, east, south, 1);
                 await topexRequest;
 
                 results = topexRequest.Result;
+
+                if (download)
+                {
+                    var file = await results.WriteCSV(true);
+                    return File(file, "text/csv", $"{DateTime.Now}-elevation.csv");
+                }
 
             }
             catch (ApplicationException e)
