@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Text;
-using TopexDownloaderAPI.Services;
+using TopexDownloaderAPI.Services.ViewText;
 using tp = TopexDownloaderAPI.Services.TopexServices;
 using gis = TopexDownloaderAPI.Services.GeographicServices;
+using TopexDownloaderAPI.Services.Writer;
 
 namespace TopexDownloaderAPI.Controllers
 {
@@ -27,7 +27,7 @@ namespace TopexDownloaderAPI.Controllers
                 if (north <= south) throw new ApplicationException("north coordinate is smaller or equal than south!");
                 else if (east <= west) throw new ApplicationException("east coordinate is smaller or equal than west!");
 
-                if (gis.LatLonRectangle(north, west, east, south) > 7e10) throw new ApplicationException("the area is too big!");
+                if (gis.LatLonRectangle(north, west, east, south) > 7e10) throw new ApplicationException("the area is way too big!");
 
                 var topexRequest = tp.GetFromTopex(north, west, east, south, 0.1);
                 
@@ -60,7 +60,11 @@ namespace TopexDownloaderAPI.Controllers
             }
             catch (ApplicationException e)
             {
-                return StatusCode(StatusCodes.Status400BadRequest, new { status = StatusCodes.Status400BadRequest, error = $"Application Error : {e.Message}" });
+                if(download && e.Message == "the area is way too big!")
+                {
+                    return File(await Writer.WriteHTML(TemplateText.ErrorAreaTooBig()),"text/html");
+                }
+                return StatusCode(StatusCodes.Status400BadRequest, new { status = StatusCodes.Status400BadRequest, error = e.Message });
             }
             catch (Exception)
             {
@@ -80,7 +84,7 @@ namespace TopexDownloaderAPI.Controllers
                 if (north < south) throw new ApplicationException("north coordinate is smaller than south!");
                 else if (east < west) throw new ApplicationException("east coordinate is smaller than west!");
 
-                if (gis.LatLonRectangle(north, west, east, south) > 7e10) throw new ApplicationException("the area is too big!");
+                if (gis.LatLonRectangle(north, west, east, south) > 7e10) throw new ApplicationException("the area is way too big!");
 
                 var topexRequest = tp.GetFromTopex(north, west, east, south, 1);
                 await topexRequest;
@@ -89,14 +93,18 @@ namespace TopexDownloaderAPI.Controllers
 
                 if (download)
                 {
-                    var file = await results.WriteCSV(true);
+                    var file = await results.WriteCSV(false);
                     return File(file, "text/csv", $"{DateTime.Now}-elevation-only.csv");
                 }
 
             }
             catch (ApplicationException e)
             {
-                return StatusCode(StatusCodes.Status400BadRequest, new { status = StatusCodes.Status400BadRequest, error = $"Application Error : {e.Message}" });
+                if (download && e.Message == "the area is way too big!")
+                {
+                    return File(await Writer.WriteHTML(TemplateText.ErrorAreaTooBig()), "text/html");
+                }
+                return StatusCode(StatusCodes.Status400BadRequest, new { status = StatusCodes.Status400BadRequest, error = e.Message });
             }
             catch (Exception)
             {
