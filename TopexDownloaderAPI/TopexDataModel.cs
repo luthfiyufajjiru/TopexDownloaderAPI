@@ -8,9 +8,9 @@ namespace TopexDownloaderAPI
 
         public TopexDataModel(double lat, double lon, double val)
         {
-            this.latitude = lat;
-            this.longitude = lon;
-            this.value = val;
+            latitude = lat;
+            longitude = lon;
+            value = val;
         }
 
         public static List<TopexDataModel> Serialize(string input)
@@ -23,6 +23,22 @@ namespace TopexDownloaderAPI
                              .Select(i => new TopexDataModel(i[1], i[0], i[2]))
                              .ToList();
             return result;
+        }
+    }
+
+    public class CompositeModel
+    {
+        public double latitude { get; set; }
+        public double longitude { get; set; }
+        public double elevation { get; set; }
+        public double gravity { get; set; }
+
+        public CompositeModel(double lat, double lon, double z, double g)
+        {
+            latitude = lat;
+            longitude = lon;
+            elevation = z;
+            gravity = g;
         }
     }
 }
