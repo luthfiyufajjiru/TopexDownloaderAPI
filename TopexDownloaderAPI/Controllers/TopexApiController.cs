@@ -27,7 +27,7 @@ namespace TopexDownloaderAPI.Controllers
                 if (north <= south) throw new ApplicationException("north coordinate is smaller or equal than south!");
                 else if (east <= west) throw new ApplicationException("east coordinate is smaller or equal than west!");
 
-                if (gis.LatLonRectangle(north, west, east, south) > 5e10) throw new ApplicationException("the area is too big!");
+                if (gis.LatLonRectangle(north, west, east, south) > 7e10) throw new ApplicationException("the area is too big!");
 
                 var topexRequest = tp.GetFromTopex(north, west, east, south, 0.1);
                 
@@ -80,7 +80,7 @@ namespace TopexDownloaderAPI.Controllers
                 if (north < south) throw new ApplicationException("north coordinate is smaller than south!");
                 else if (east < west) throw new ApplicationException("east coordinate is smaller than west!");
 
-                if (gis.LatLonRectangle(north, west, east, south) > 5e10) throw new ApplicationException("the area is too big!");
+                if (gis.LatLonRectangle(north, west, east, south) > 7e10) throw new ApplicationException("the area is too big!");
 
                 var topexRequest = tp.GetFromTopex(north, west, east, south, 1);
                 await topexRequest;
